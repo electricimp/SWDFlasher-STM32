@@ -1,3 +1,12 @@
+// TODO: Add comments into the code
+// TODO: Check if binaries bigger than 1KB (or 4KB) are flashed OK
+// TODO: Add error handling
+// TODO: Make sure different versions of STM32F100 will work
+// normally (there is a difference between them - density of a flash memory)
+// TODO: Add some links on docs where needed
+// TODO: Remove commented (extra) code
+
+
 class SWDFlasherSTM32 {
 
     _swdp = null;
