@@ -6,3 +6,5 @@ This is the first pre-alpha version. It may be unstable and has a number of limi
 - Any bigger binary (especially > 1KB) may cause an error
 - The code is kind of dirty and contains many TODOs and not implemented methods
 - Some methods should be added/removed/renamed/etc.
+
+These limitations/bugs/TODOs will be fixed during the further iterations. The work is in progress now.
