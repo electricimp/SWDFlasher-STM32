@@ -97,9 +97,10 @@ class SWDFlasherSTM32 {
         if (status == SWDFSTM32_STATUS_OK) {
             logger.info("Finishing the flashing...", LOG_SOURCE.APP);
 
-            if (_stm32.endProgramming() ||
-                _stm32.disableHaltOnReset() ||
-                _stm32.sysReset()) {
+            local err = _stm32.endProgramming() ||
+                        _stm32.disableHaltOnReset() ||
+                        _stm32.sysReset();
+            if (err) {
 
                 logger.error("An error occured. Flashing failed: " + err, LOG_SOURCE.APP);
 

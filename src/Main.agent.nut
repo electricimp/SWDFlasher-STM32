@@ -62,11 +62,13 @@ logger <- Logger(LOG_INFO_LEVEL);
 flasher <- SWDFlasherSTM32();
 flasher.init();
 
-const IMAGE_URL = "https://github.com/willdonnelly/pirate-swd/raw/master/stm32-firmwares/blink1M.bin";
+// TODO: replace with right links!
+const IMAGE1_URL = "https://github.com/nobitlost/SWDFlasher-STM32/raw/develop/firmware/blinkSlow.bin";
+const IMAGE2_URL = "https://github.com/nobitlost/SWDFlasher-STM32/raw/develop/firmware/blinkFast.bin";
 const CREDENTIALS = "<username>:<password>"
 local headers = {
     // "Authorization" : "Basic " + http.base64encode(CREDENTIALS)
 };
-fwDownloader <- FirmwareHTTPDownloader(IMAGE_URL, headers);
+fwDownloader <- FirmwareHTTPDownloader(IMAGE1_URL, headers);
 
 flasher.flashFirmware(fwDownloader);

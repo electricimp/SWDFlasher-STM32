@@ -1,4 +1,4 @@
-const FW_HTTP_D_NO_MORE_DATA = 1;
+const FW_HTTP_D_ERROR_NO_MORE_DATA = 1;
 
 class FirmwareHTTPDownloader {
 
@@ -57,7 +57,7 @@ class FirmwareHTTPDownloader {
 
     function getChunk(num, callback) {
         if (_fw == null || (num * _chunkSize) >= _fw.len()) {
-            callback(FW_HTTP_D_NO_MORE_DATA, null);
+            callback(FW_HTTP_D_ERROR_NO_MORE_DATA, null);
             return;
         }
 
