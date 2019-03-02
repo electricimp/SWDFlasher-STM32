@@ -138,6 +138,11 @@ class SWMemAP {
     // For example: accessSize = SWMA_SIZE_HALFWORD (= 2); in this case the Mem-AP will make two accesses (2B + 2B) to read a word (4B)
     // Addr must be aligned appropriately with respect to accessSize (e.g. for accessSize = SWMA_SIZE_WORD the addr should be aligned at 4B bound)
     function memRead(addr, count, accessSize = SWMA_SIZE_WORD) {
+        // We are going to set the SELECT register of DP manually (instead of using read() method which does it by itself)
+        // This will increase speed because we don't do extra accesses to the SELECT register on every read
+        local drwSelectApbank = (SWMA_REGISTER.DRW & 0xF0) >> 4;
+        local drwOffset = SWMA_REGISTER.DRW & 0x0F;
+
         local data = blob();
         local curAddr = addr;
         local next1KBbound = 0;
@@ -153,6 +158,11 @@ class SWMemAP {
                     return err;
                 }
                 next1KBbound = (curAddr & 0xFFFFFC00) + 1024;
+
+                // Here we set the SELECT register of DP. We do it once for all reads within 1KB range
+                // The other calls like _memAccessSetup() and memReadWord() can change the content of the SELECT register so
+                // we must set it to the correct value after those calls
+                _swdp.select(SWMA_AP_NUM, drwSelectApbank);
             }
 
             // The case when addr is not aligned at 4B bound and a read operation starts before a 1KB bound and ends after it
@@ -163,10 +173,17 @@ class SWMemAP {
                 if (err = memReadWord(curAddr, accessSize)) {
                     return err;
                 }
-            } else if (err = read(SWMA_REGISTER.DRW)) {
+
+                data.writen(_lastRead, 'i');
+
+            } else if (err = _swdp.readAP(drwOffset) || _swdp.readDP(SWDP_REGISTER.RDBUFF)) {
                 return err;
+            } else {
+                // _swdp.readAP() and _swdp.readDP() finished successfully
+
+                // We use _swdp.getLastRead() while working with _swdp directly (_swdp.readAP() and _swdp.readDP() calls above)
+                data.writen(_swdp.getLastRead(), 'i');
             }
-            data.writen(_lastRead, 'i');
 
             // No matter what the accessSize is, we read 4B per one operation
             curAddr += SWMA_SIZE_WORD;
@@ -191,6 +208,11 @@ class SWMemAP {
         }
         data.seek(0);
 
+        // We are going to set the SELECT register of DP manually (instead of using write() method which does it by itself)
+        // This will increase speed because we don't do extra accesses to the SELECT register on every write
+        local drwSelectApbank = (SWMA_REGISTER.DRW & 0xF0) >> 4;
+        local drwOffset = SWMA_REGISTER.DRW & 0x0F;
+
         local curAddr = addr;
         local next1KBbound = 0;
         local err = 0;
@@ -205,6 +227,11 @@ class SWMemAP {
                     return err;
                 }
                 next1KBbound = (curAddr & 0xFFFFFC00) + 1024;
+
+                // Here we set the SELECT register of DP. We do it once for all writes within 1KB range
+                // The other calls like _memAccessSetup() and memWriteWord() can change the content of the SELECT register so
+                // we must set it to the correct value after those calls
+                _swdp.select(SWMA_AP_NUM, drwSelectApbank);
             }
 
             // The case when addr is not aligned at 4B bound and a write operation starts before a 1KB bound and ends after it
@@ -215,7 +242,7 @@ class SWMemAP {
                 if (err = memWriteWord(curAddr, data.readn('i'), accessSize)) {
                     return err;
                 }
-            } else if (err = write(SWMA_REGISTER.DRW, data.readn('i'))) {
+            } else if (err = _swdp.writeAP(drwOffset, data.readn('i'))) {
                 return err;
             }
 

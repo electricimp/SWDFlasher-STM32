@@ -108,11 +108,16 @@ class SWDFlasherSTM32 {
             } else {
                 logger.info("Flashing was finished successfully!", LOG_SOURCE.APP);
             }
+        } else {
+            _stm32.endProgramming();
         }
 
         agent.send(SWDFSTM32_EVENT_DONE_FLASHING, status);
     }
 }
+
+// Use this logger configuration during debugging
+// logger <- Logger(LOG_DEBUG_LEVEL, LOG_SOURCE.ANY);
 
 logger <- Logger(LOG_INFO_LEVEL, LOG_SOURCE.APP | LOG_SOURCE.SWDSTM32);
 flasher <- SWDFlasherSTM32(hardware.pinC, hardware.pinD);

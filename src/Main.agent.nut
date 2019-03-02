@@ -10,12 +10,18 @@ class SWDFlasherSTM32 {
 
     _fwDownloader = null;
 
+    _startTime = null;
+
     constructor() {
         const SWDFSTM32_EVENT_START_FLASHING = "start-flashing";
         const SWDFSTM32_EVENT_REQUEST_CHUNK  = "request-chunk";
         const SWDFSTM32_EVENT_RECEIVE_CHUNK  = "receive-chunk";
         const SWDFSTM32_EVENT_DONE_FLASHING  = "done-flashing";
         const SWDFSTM32_EVENT_ABORT_FLASHING = "abort-flashing";
+
+        const SWDFSTM32_STATUS_OK = "OK";
+        const SWDFSTM32_STATUS_ABORTED = "Aborted";
+        const SWDFSTM32_STATUS_FAILED = "Failed";
     }
 
     function init() {
@@ -31,6 +37,9 @@ class SWDFlasherSTM32 {
                 logger.error("Failed to initialize downloader: " + err, LOG_SOURCE.APP);
                 return;
             }
+
+            _startTime = time();
+
             device.send(SWDFSTM32_EVENT_START_FLASHING, _fwDownloader.chunksNum());
         }.bindenv(this);
 
@@ -54,6 +63,10 @@ class SWDFlasherSTM32 {
 
     function _onDoneFlashing(status) {
         logger.info("Flashing finished with status: " + status, LOG_SOURCE.APP);
+
+        if (status == SWDFSTM32_STATUS_OK) {
+            logger.info("Flashing took " + (time() - _startTime) + " sec", LOG_SOURCE.APP);
+        }
     }
 }
 
