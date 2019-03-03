@@ -82,7 +82,7 @@ For example: run these commands from the "src/" directory `pleasebuild agent/Mai
 
 You can use this option instead of manual building and running the application. \
 This project has been written using [Sublime Plug-in](https://github.com/electricimp/ElectricImp-Sublime). All configuration settings and pre-processed files have been excluded.
-1. Follow the instructions [here](https://github.com/electricimp/ElectricImp-Sublime#installation) to install the plug-in and create a project.
+1. Follow the instructions [here](https://github.com/electricimp/ElectricImp-Sublime#installation) to install the plug-in and create a project
 2. Replace the `src` folder in your newly created project with the `src` folder found in this repository
 3. Update `settings/electric-imp.settings` "device-file" and "agent-file" to the following (on Windows use `\\` instead of `/`):
 ```
