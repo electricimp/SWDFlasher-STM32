@@ -42,16 +42,23 @@ To use one of the sample images you need to obtain a direct link:
 
 The sample firmware blinks with a blue LED integrated to the STM32VLDISCOVERY board. These two firmwares differ in the frequency of blinking.
 
+#### How To Make A Binary Image ####
+
+There is a number of different formats of firmware images. This example supports **only binary** format. If you have an image in a different format, you need to convert it to binary first. \
+This can be done using the ["objcopy" (or "arm-none-eabi-objcopy")](https://linux.die.net/man/1/objcopy) utility from the [
+GNU Arm Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm). \
+Example command: `arm-none-eabi-objcopy -I ihex your_firmware_image.hex -O binary your_firmware_image.bin`. \
+This command converts an image from Intel HEX format to binary.
+
+
 ### Basic HTTP Authentication ###
 
-If you need to use Basic HTTP Authentication for downloading your firmware, just add your credentials to the headers:
+If you need to use Basic HTTP Authentication for downloading your firmware, just add your credentials to the `CREDENTIALS` constant:
 ```squirrel
 const CREDENTIALS = "<username>:<password>";
-local headers = {
-    "Authorization" : "Basic " + http.base64encode(CREDENTIALS)
-};
-fwDownloader <- FirmwareHTTPDownloader(<YOUR LINK>, headers);
 ```
+
+**Note**: If you use the sample firmware from this repository or firmware from another source which doesn't require authentication, just leave the constant empty.
 
 ### How To Run ###
 
@@ -92,14 +99,6 @@ You can just click on the agent's URL in the [Electric Imp's IDE](https://impcen
 This message in the logs states successful flashing: `Flashing finished with status: OK`. \
 Be prepared that the flashing process may take a while. During the process you should see messages like `Chunk requested`/`Chunk received`. \
 Speed of flashing is about 450B/s (has been measured during the testing with STM32VLDISCOVERY).
-
-## How To Make A Binary Image ##
-
-There is a number of different formats of firmware images. This example supports **only binary** format. If you have an image in a different format, you need to convert it to binary first. \
-This can be done using the ["objcopy" (or "arm-none-eabi-objcopy")](https://linux.die.net/man/1/objcopy) utility from the [
-GNU Arm Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm). \
-Example command: `arm-none-eabi-objcopy -I ihex your_firmware_image.hex -O binary your_firmware_image.bin`. \
-This command converts an image from Intel HEX format to binary.
 
 ## Limitations ##
 
