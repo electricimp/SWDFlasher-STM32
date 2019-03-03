@@ -76,17 +76,18 @@ For example: run these commands from the "src/" directory `pleasebuild agent/Mai
 You can use this option instead of manual building and running the application. \
 This project has been written using [Sublime Plug-in](https://github.com/electricimp/ElectricImp-Sublime). All configuration settings and pre-processed files have been excluded.
 1. Follow the instructions [here](https://github.com/electricimp/ElectricImp-Sublime#installation) to install the plug-in and create a project.
-1. Replace the `src` folder in your newly created project with the `src` folder found in this repository
-1. Update `settings/electric-imp.settings` "device-file" and "agent-file" to the following (on Windows use `\\` instead of `/`):
-
+2. Replace the `src` folder in your newly created project with the `src` folder found in this repository
+3. Update `settings/electric-imp.settings` "device-file" and "agent-file" to the following (on Windows use `\\` instead of `/`):
 ```
     "device-file": "src/device/Main.device.nut",
     "agent-file": "src/agent/Main.agent.nut"
 ```
+4. [Build and run the application](https://github.com/electricimp/ElectricImp-Sublime#building-and-running)
 
 #### Start Flashing ####
 
-If the application is running, you should (TODO) to start flashing.
+If the application is running, you should make an HTTP GET-request to the `/flash` endpoint of agent to start flashing. \
+You can just click on the agent's URL in the [Electric Imp's IDE](https://impcentral.electricimp.com/ide/), append `/flash` to the URL and press Enter.
 
 This message in the logs states successful flashing: `Flashing finished with status: OK`. \
 Be prepared that the flashing process may take a while. During the process you should see messages like `Chunk requested`/`Chunk received`. \
