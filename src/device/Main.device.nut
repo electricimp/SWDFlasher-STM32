@@ -52,7 +52,6 @@ class SWDFlasherSTM32 {
         const SWDFSTM32_STATUS_ABORTED = "Aborted";
         const SWDFSTM32_STATUS_FAILED = "Failed";
 
-
         _swdp = SWDebugPort(swdPinClk, swdPinData);
         _swma = SWMemAP(_swdp);
         _stm32 = SWDSTM32(_swdp, _swma);
@@ -65,6 +64,11 @@ class SWDFlasherSTM32 {
     }
 
     function _onStartFlashing(chunksNum) {
+        if (_expectedChunk != null) {
+            logger.error("Got a request to start flashing but it is already in progress", LOG_SOURCE.APP);
+            return;
+        }
+
         logger.info("Starting flashing. Chunks to flash: " + chunksNum, LOG_SOURCE.APP);
 
         _chunksToFlash = chunksNum;
@@ -114,6 +118,11 @@ class SWDFlasherSTM32 {
     }
 
     function _onAbortFlashing(_) {
+        if (_expectedChunk == null) {
+            logger.error("Got a request to abort flashing but it is not in progress", LOG_SOURCE.APP);
+            return;
+        }
+
         logger.info("Abort flashing request received!", LOG_SOURCE.APP);
         _onDoneFlashing(SWDFSTM32_STATUS_ABORTED);
     }

@@ -37,6 +37,7 @@ class SWDFlasherSTM32 {
     _startTime = null;
 
     _dispatchTable = null;
+    _deviceRespondTimer = null;
 
     constructor(fwDownloader = null) {
         const SWDFSTM32_EVENT_START_FLASHING = "start-flashing";
@@ -48,6 +49,9 @@ class SWDFlasherSTM32 {
         const SWDFSTM32_STATUS_OK = "OK";
         const SWDFSTM32_STATUS_ABORTED = "Aborted";
         const SWDFSTM32_STATUS_FAILED = "Failed";
+
+        // Sec
+        const SWDFSTM32_TIMEOUT = 60;
 
         _fwDownloader = fwDownloader;
 
@@ -81,18 +85,31 @@ class SWDFlasherSTM32 {
             _startTime = time();
 
             device.send(SWDFSTM32_EVENT_START_FLASHING, _fwDownloader.chunksNum());
+            _resetRespondTimer();
         }.bindenv(this);
 
         _fwDownloader.init(onDone);
     }
 
+    function isFlashing() {
+        return _startTime != null;
+    }
+
     function _onRequestChunk(chunkNum) {
+        if (!isFlashing()) {
+            logger.error("Got a request to send a chunk but flashing is not in progress", LOG_SOURCE.APP);
+            device.send(SWDFSTM32_EVENT_ABORT_FLASHING, null);
+            return;
+        }
+
         logger.info("Chunk requested: " + chunkNum, LOG_SOURCE.APP);
+
+        _resetRespondTimer();
 
         local onDone = function(err, data) {
             if (err) {
                 logger.error("Failed to get next chunk: " + err, LOG_SOURCE.APP);
-                device.send(SWDFSTM32_EVENT_ABORT_FLASHING);
+                device.send(SWDFSTM32_EVENT_ABORT_FLASHING, null);
                 return;
             }
             device.send(SWDFSTM32_EVENT_RECEIVE_CHUNK, data);
@@ -102,11 +119,33 @@ class SWDFlasherSTM32 {
     }
 
     function _onDoneFlashing(status) {
+        if (!isFlashing()) {
+            logger.error("Got a request to done flashing but it is not in progress", LOG_SOURCE.APP);
+            return;
+        }
+
         logger.info("Flashing finished with status: " + status, LOG_SOURCE.APP);
 
         if (status == SWDFSTM32_STATUS_OK) {
             logger.info("Flashing took " + (time() - _startTime) + " sec", LOG_SOURCE.APP);
         }
+
+        _startTime = null;
+        _resetRespondTimer();
+    }
+
+    function _resetRespondTimer() {
+        _deviceRespondTimer && imp.cancelwakeup(_deviceRespondTimer);
+
+        if (isFlashing()) {
+            _deviceRespondTimer = imp.wakeup(SWDFSTM32_TIMEOUT, _deviceNotResponding.bindenv(this));
+        }
+    }
+
+    function _deviceNotResponding() {
+        logger.error("Device doesn't respond", LOG_SOURCE.APP);
+
+        _onDoneFlashing(SWDFSTM32_STATUS_FAILED);
     }
 
     function _flashRequest(request, response) {
@@ -120,6 +159,10 @@ class SWDFlasherSTM32 {
                 if (_fwDownloader == null) {
                     responseCode = 500;
                     responseBody.message = "Default firmware downloader is not set";
+                    break;
+                }
+                if (isFlashing()) {
+                    responseBody.message = "Flashing is already in progress";
                     break;
                 }
                 flashFirmware();
@@ -145,7 +188,7 @@ class SWDFlasherSTM32 {
 
         // 404 handler
         response.send(404, "No such endpoint.");
-    };
+    }
 }
 
 
