@@ -177,7 +177,7 @@ class SWDFlasherSTM32 {
     }
 
     function _dispatchRequest(request, response) {
-        // This is a simple HTTP requests dispatcher.
+        // This is a simple HTTP requests dispatcher
 
         foreach (urlPattern, handler in _dispatchTable) {
             if (request.path.find(urlPattern) == 0) {
@@ -194,12 +194,17 @@ class SWDFlasherSTM32 {
 
 logger <- Logger(LOG_INFO_LEVEL);
 
+
 const IMAGE_URL = "<link to your firmware image>";
 
-const CREDENTIALS = "<username>:<password>";
-local headers = {
-    // "Authorization" : "Basic " + http.base64encode(CREDENTIALS)
-};
+// If you want to use Basic HTTP Authentication, enter your
+// credentials here in "<username>:<password>" format
+// Otherwise leave the constant empty
+const CREDENTIALS = "";
+local headers = {};
+if (CREDENTIALS.len() > 0) {
+    headers["Authorization"] = "Basic " + http.base64encode(CREDENTIALS);
+}
 
 fwDownloader <- FirmwareHTTPDownloader(IMAGE_URL, headers);
 

@@ -28,6 +28,7 @@
 @include __PATH__ + "/SWDSTM32.device.nut"
 
 
+// SWD Pins: SWCLK and SWDIO. Any GPIO pins can be used. Must be set in accordance with your wiring
 SWDFSTM32_SWCLK_PIN <- hardware.pinC;
 SWDFSTM32_SWDIO_PIN <- hardware.pinD;
 
