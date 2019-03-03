@@ -22,10 +22,14 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-@include "Logger.shared.nut"
-@include "SWDebugPort.device.nut"
-@include "SWMemAP.device.nut"
-@include "SWDSTM32.device.nut"
+@include __PATH__ + "/../shared/Logger.shared.nut"
+@include __PATH__ + "/SWDebugPort.device.nut"
+@include __PATH__ + "/SWMemAP.device.nut"
+@include __PATH__ + "/SWDSTM32.device.nut"
+
+
+SWDFSTM32_SWCLK_PIN <- hardware.pinC;
+SWDFSTM32_SWDIO_PIN <- hardware.pinD;
 
 
 class SWDFlasherSTM32 {
@@ -142,7 +146,7 @@ class SWDFlasherSTM32 {
 
 // Use this logger configuration during debugging
 // logger <- Logger(LOG_DEBUG_LEVEL, LOG_SOURCE.ANY);
-
 logger <- Logger(LOG_INFO_LEVEL, LOG_SOURCE.APP | LOG_SOURCE.SWDSTM32);
-flasher <- SWDFlasherSTM32(hardware.pinC, hardware.pinD);
+
+flasher <- SWDFlasherSTM32(SWDFSTM32_SWCLK_PIN, SWDFSTM32_SWDIO_PIN);
 flasher.init();

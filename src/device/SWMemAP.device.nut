@@ -59,58 +59,23 @@ class SWMemAP {
     _lastRead = null;
 
     constructor(swDebugPort) {
+        // Mem-AP's AP number is 0
+        const SWMA_AP_NUM          = 0;
+
         _swdp = swDebugPort;
     }
 
     function init() {
-        // System powerup request
-        const SWMA_CTRL_CSYSPWRUPREQ = 0x40000000;
-        // Debug powerup request
-        const SWMA_CTRL_CDBGPWRUPREQ = 0x10000000;
-        // Debug reset request
-        const SWMA_CTRL_CDBGRSTREQ   = 0x04000000;
-        // System powerup acknowledge
-        const SWMA_CTRL_CSYSPWRUPACK = 0x80000000;
-        // Debug powerup acknowledge
-        const SWMA_CTRL_CDBGPWRUPACK = 0x20000000;
-        // Debug reset acknowledge
-        const SWMA_CTRL_CDBGRSTACK   = 0x08000000;
-
-        // Sec
-        const SWMA_CHECK_DELAY       = 0.001;
-        // Millis
-        const SWMA_POWERUP_TIMEOUT   = 1000;
-        // Mem-AP's AP number is 0
-        const SWMA_AP_NUM            = 0;
-
-
-        logger.info("Powering up the system and debug domains. And resetting the debug domain...", LOG_SOURCE.SWMA);
-
-        local err = _swdp.writeDP(SWDP_REGISTER.CTRL_STAT, SWMA_CTRL_CSYSPWRUPREQ | SWMA_CTRL_CDBGPWRUPREQ | SWMA_CTRL_CDBGRSTREQ);
-
+        // The debug reset logic is described in ADIv5 spec, but fails to work
+        // correctly on STM32. CDBGRSTACK is never asserted, and we
+        // just get a timeout error. So this logic is off by default.
+        local err = _powerUp() /*|| _resetDebug()*/;
         if (err) {
-            logger.error("Failed to power up the system and debug domains: " + err, LOG_SOURCE.SWMA);
             return err;
         }
 
-        local ready = false;
-        local startTime = hardware.millis();
-        while (!ready) {
-            imp.sleep(SWMA_CHECK_DELAY);
-
-            if (err = _swdp.readDP(SWDP_REGISTER.CTRL_STAT)) {
-                logger.error("Failed to read DP status: " + err, LOG_SOURCE.SWMA);
-                return err;
-            }
-
-            ready = _swdp.getLastRead() & (SWMA_CTRL_CSYSPWRUPREQ | SWMA_CTRL_CDBGPWRUPREQ | SWMA_CTRL_CDBGRSTREQ);
-
-            if (hardware.millis() - startTime > SWMA_POWERUP_TIMEOUT) {
-                return SWMA_ERROR_INIT_TIMEOUT;
-            }
-        }
-
-        if (err = read(SWMA_REGISTER.IDR)) {
+        err = read(SWMA_REGISTER.IDR);
+        if (err) {
             logger.error("Failed to read IDCODE: " + err, LOG_SOURCE.SWMA);
             return err;
         }
@@ -396,6 +361,98 @@ class SWMemAP {
         if (err = write(SWMA_REGISTER.TAR, addr)) {
             logger.error("Memory access setup failed. Can't write TAR register: " + err, LOG_SOURCE.SWMA);
             return err;
+        }
+
+        return 0;
+    }
+
+    function _powerUp() {
+        // System powerup request
+        const SWMA_CTRL_CSYSPWRUPREQ = 0x40000000;
+        // Debug powerup request
+        const SWMA_CTRL_CDBGPWRUPREQ = 0x10000000;
+        // System powerup acknowledge
+        const SWMA_CTRL_CSYSPWRUPACK = 0x80000000;
+        // Debug powerup acknowledge
+        const SWMA_CTRL_CDBGPWRUPACK = 0x20000000;
+
+
+        logger.info("Powering up the system and debug domains...", LOG_SOURCE.SWMA);
+
+        local err = _dpRequestAndWait(SWMA_CTRL_CSYSPWRUPREQ | SWMA_CTRL_CDBGPWRUPREQ,
+                                      SWMA_CTRL_CSYSPWRUPACK | SWMA_CTRL_CDBGPWRUPACK);
+        if (err) {
+            logger.error("Failed to power up the system and debug domains: " + err, LOG_SOURCE.SWMA);
+            return err;
+        }
+
+        return 0;
+    }
+
+    function _resetDebug() {
+        // Debug reset request
+        const SWMA_CTRL_CDBGRSTREQ   = 0x04000000;
+        // Debug reset acknowledge
+        const SWMA_CTRL_CDBGRSTACK   = 0x08000000;
+
+
+        logger.info("Resetting the debug domain...", LOG_SOURCE.SWMA);
+
+        local err = _dpRequestAndWait(SWMA_CTRL_CDBGRSTREQ, SWMA_CTRL_CDBGRSTACK) ||
+                    _dpRequestAndWait(SWMA_CTRL_CDBGRSTREQ, SWMA_CTRL_CDBGRSTACK, true);
+        if (err) {
+            logger.error("Failed to reset the debug domain: " + err, LOG_SOURCE.SWMA);
+            return err;
+        }
+
+        return 0;
+    }
+
+    // Requests the action specified in reqBits through CTRL/STAT register of DP and waits for an acknowledgement
+    // If deassert = true, requests cancellation of that action and waits for an acknowledgement
+    function _dpRequestAndWait(reqBits, ackBits, deassert = false) {
+        // Sec
+        const SWMA_CHECK_DELAY = 0.001;
+        // Millis
+        const SWMA_REQ_AND_WAIT_TIMEOUT = 1000;
+
+
+        local err = _swdp.readDP(SWDP_REGISTER.CTRL_STAT);
+        if (err) {
+            return err;
+        }
+
+        local request = _swdp.getLastRead();
+
+        if (!deassert) {
+            request = request | reqBits;
+        } else {
+            request = request & ~reqBits;
+        }
+
+        if (err = _swdp.writeDP(SWDP_REGISTER.CTRL_STAT, request)) {
+            return err;
+        }
+
+        local ready = false;
+        local startTime = hardware.millis();
+        while (!ready) {
+            imp.sleep(SWMA_CHECK_DELAY);
+
+            if (err = _swdp.readDP(SWDP_REGISTER.CTRL_STAT)) {
+                logger.error("Failed to read DP status: " + err, LOG_SOURCE.SWMA);
+                return err;
+            }
+
+            if (!deassert) {
+                ready = (_swdp.getLastRead() & ackBits) == ackBits;
+            } else {
+                ready = (_swdp.getLastRead() & ackBits) == 0;
+            }
+
+            if (hardware.millis() - startTime > SWMA_REQ_AND_WAIT_TIMEOUT) {
+                return SWMA_ERROR_INIT_TIMEOUT;
+            }
         }
 
         return 0;

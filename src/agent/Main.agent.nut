@@ -22,8 +22,8 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-@include "Logger.shared.nut"
-@include "FWDownloader.agent.nut"
+@include __PATH__ + "/../shared/Logger.shared.nut"
+@include __PATH__ + "/FWDownloader.agent.nut"
 
 
 class SWDFlasherSTM32 {
@@ -99,15 +99,13 @@ logger <- Logger(LOG_INFO_LEVEL);
 flasher <- SWDFlasherSTM32();
 flasher.init();
 
-// TODO: replace with right links!
-const IMAGE1_URL = "https://github.com/nobitlost/SWDFlasher-STM32/raw/develop/firmware/blinkSlow.bin";
-const IMAGE2_URL = "https://github.com/nobitlost/SWDFlasher-STM32/raw/develop/firmware/blinkFast.bin";
+const IMAGE_URL = "<link to your firmware image>";
 
 const CREDENTIALS = "<username>:<password>";
 local headers = {
     // "Authorization" : "Basic " + http.base64encode(CREDENTIALS)
 };
 
-fwDownloader <- FirmwareHTTPDownloader(IMAGE1_URL, headers);
+fwDownloader <- FirmwareHTTPDownloader(IMAGE_URL, headers);
 
 flasher.flashFirmware(fwDownloader);
