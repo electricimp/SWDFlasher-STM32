@@ -1,6 +1,6 @@
 # SWDFlasher-STM32 #
 
-SWDFlasher-STM32 is an imp application that can be used to flash the STM32F100 MCU. It downloads a firmware image via HTTPs, transmits it to the device, which uses the SWD protocol to program the MCU.
+SWDFlasher-STM32 is an imp application that can be used to flash the STM32F100 MCU. Its agent downloads a firmware image via HTTPS and then transmits it to the device, which uses the [SWD protocol](https://www.arm.com/files/pdf/Serial_Wire_Debug.pdf) to program the MCU.
 
 ## Hardware ##
 
@@ -13,7 +13,7 @@ To make use of SWDFlasher-STM32 you will require:
 
 ### Wiring ###
 
-You will need three wires to bridge the following pins on the imp and the STM32F100RBT6B:
+You will need three wires to bridge the following pins on the imp and the STM32VLDISCOVERY/STM32VLDISCOVERY:
 
 | imp | STM32F100RBT6B |
 | :-: | :-: |
