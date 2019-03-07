@@ -1,112 +1,124 @@
 # SWDFlasher-STM32 #
 
-This is an example application for flashing the STM32F100 MCU over-the-air (OTA) via imp module. 
-It downloads a firmware image via HTTPs and uses the SWD protocol to program the MCU. \
-The application contains both agent's and device's parts.
+SWDFlasher-STM32 is an imp application that can be used to flash the STM32F100 MCU. It downloads a firmware image via HTTPs, transmits it to the device, which uses the SWD protocol to program the MCU.
 
 ## Hardware ##
 
-- [imp004m Breakout Board](https://store.electricimp.com/products/imp004m-breakout-board?variant=33852062354) or [imp003 Breakout Board](https://store.electricimp.com/products/imp003-breakout-board?variant=31162918482)
-- [STM32VLDISCOVERY](https://www.st.com/en/evaluation-tools/stm32vldiscovery.html)
+To make use of SWDFlasher-STM32 you will require:
 
-**Note**: Other hardware may be used but haven't been tested. The implementation is general for any STM32F10xxx MCU but tested only with STM32F100RBT6B (which is installed on the STM32VLDISCOVERY board).
+- An [imp004m Breakout Board](https://store.electricimp.com/products/imp004m-breakout-board?variant=33852062354) or [imp003 Breakout Board](https://store.electricimp.com/products/imp003-breakout-board?variant=31162918482).
+- An [STM32VLDISCOVERY](https://www.st.com/en/evaluation-tools/stm32vldiscovery.html) evaluation board.
 
-## Wiring ##
+**Note** Other imp-based hardware may be used but the application has only been tested using the devices listed above. The implementation method applies to any STM32F10xxx MCU but has been tested only with the STM32F100RBT6B (installed on the STM32VLDISCOVERY board).
 
-You will need 3 wires:
-1) GND (of imp) <&mdash;> GND (of STM32 MCU)
-2) PinC (of imp) <&mdash;> SWCLK (of STM32 MCU)
-3) PinD (of imp) <&mdash;> SWDIO (of STM32 MCU)
+### Wiring ###
 
-**Note**: Generally speaking, any GPIO pins can be used on the imp's side. But you will need to specify your pins in the code (`SWDFSTM32_SWCLK_PIN` and `SWDFSTM32_SWDIO_PIN` constants in [Main.device.nut](./src/device/Main.device.nut)).
+You will need three wires to bridge the following pins on the imp and the STM32F100RBT6B:
 
-For STM32VLDISCOVERY: remove jumpers from CN3 connector of your MCU and wire it with the imp as shown at the following picture
+| imp | STM32F100RBT6B |
+| :-: | :-: |
+| GND |GND |
+| C | SWCLK |
+| D | SWDIO |
+
+On the STM32VLDISCOVERY, remove the jumpers from the CN3 connector of your MCU; the SWCLK and SWDIO are those shown connected to the imp below:
 
 ![STM32VLDISCOVERY Wiring](./imgs/Wiring.png)
 
+**Note** Almost any GPIO pins can be used on the imp’s side, but you will need to specify your pin choice in the code. Look for the *SWDFSTM32_SWCLK_PIN* and *SWDFSTM32_SWDIO_PIN* constants in [the main device code](./src/device/Main.device.nut) (toward to the top of the listing).
+
 ## Setup ##
 
-### Firmware image ###
+### Firmware Images ###
 
-The example requires an HTTP link to a firmware **binary** image.
+SWDFlasher-STM32 requires the URL of a **binary** firmware image.
 
-The link should be added into the code in the [Main.agent.nut](./src/agent/Main.agent.nut) file (almost at the end of the file):
+The URL should be added to the code in the [Main.agent.nut](./src/agent/Main.agent.nut) file (almost at the end of the file):
+
 ```squirrel
-const IMAGE_URL = "<link to your firmware image>";
+const IMAGE_URL = "<LINK_TO_YOUR_FIRMWARE_IMAGE>";
 ```
 
-There are 2 sample images in the [firmware folder](./firmware/). You can use them to try the example. They are also made for STM32VLDISCOVERY board. \
-To use one of the sample images you need to obtain a direct link:
-1. Copy to the clipboard one of the following links: [blinkFast.bin](./firmware/blinkFast.bin?raw=true) or [blinkSlow.bin](./firmware/blinkSlow.bin?raw=true)
-1. Paste the link into the code as a value of the `IMAGE_URL` constant
+We have included two simple sample images in the [firmware folder](./firmware/). You can use them to try the code by adding their online locations to the code as shown above. They are made for the STM32VLDISCOVERY board and blink its blue LED. The different versions of the firmware apply different blinking frequencies.
 
-The sample firmware blinks with a blue LED integrated to the STM32VLDISCOVERY board. These two firmwares differ in the frequency of blinking.
+To use one of the sample images you need to obtain a direct link to the files on GitHub:
 
-#### How To Make A Binary Image ####
+1. Copy to the clipboard one of the following links: 
+    - [blinkFast.bin](./firmware/blinkFast.bin?raw=true)
+    - [blinkSlow.bin](./firmware/blinkSlow.bin?raw=true)
+1. Paste the link into the code as a value of the *IMAGE_URL* constant as shown in the code snippet above.
 
-There is a number of different formats of firmware images. This example supports **only binary** format. If you have an image in a different format, you need to convert it to binary first. \
-This can be done using the ["objcopy" (or "arm-none-eabi-objcopy")](https://linux.die.net/man/1/objcopy) utility from the [
-GNU Arm Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm). \
-Example command: `arm-none-eabi-objcopy -I ihex your_firmware_image.hex -O binary your_firmware_image.bin`. \
-This command converts an image from Intel HEX format to binary.
+#### How To Make A Binary Firmware Image ####
 
+STM32F10xxx firmware images can be provided to you in any of a number of different formats. However, this application **only supports the binary format**. If you have an image in a different format, you will first need to convert it to binary. This can be done using the [*bjcopy* (or *arm-none-eabi-objcopy*)](https://linux.die.net/man/1/objcopy) utility from the [GNU ARM Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm).
+
+For example, the following command:
+
+```bash
+arm-none-eabi-objcopy -I ihex your_firmware_image.hex -O binary your_firmware_image.bin
+```
+
+converts an image from Intel HEX format to binary.
 
 ### Basic HTTP Authentication ###
 
-If you need to use Basic HTTP Authentication for downloading your firmware, just add your credentials to the `CREDENTIALS` constant:
+You may need to use HTTP authentication to download your chosen firmware image. However, this application **only supports Basic HTTP Authentication**. If you can download your chosen firmware image using  Basic HTTP Authentication, add your access details to the *CREDENTIALS* constant in the agent code as follows:
+
 ```squirrel
-const CREDENTIALS = "<username>:<password>";
+const CREDENTIALS = "<USERNAME>:<PASSWORD>";
 ```
 
-**Note**: If you use the sample firmware from this repository or firmware from another source which doesn't require authentication, just leave the constant empty.
+**Note** If you use the sample firmware from this repository, or firmware from another source which doesn’t require authentication, please leave the constant empty.
 
-### How To Run ###
+## How To Run The Application ##
 
-You have two options of how to build and run the application:
-1. [Manually](#build-and-run-manually)
-1. [Using Sublime Plug-In](#build-and-run-using-sublime-plug-in)
+SWDFlasher-STM32 is provided as a set of multiple files which must be combined before being uploaded to the impCloud™ for deployment to your chosen device group and the device assigned to it. There are two ways to perform this assembly:
 
-Once you run the application, please see the [Start Flashing](#start-flashing) section.
+- [Manually](#manual-assembly)
+- [Using the impWorks™ Sublime Plug-In](#build-and-run-using-sublime)
 
-#### Build And Run Manually ####
+Once you have built and run the application, please see the [Start Flashing](#start-flashing) section.
 
-Project's source code has the following structure:
-- ["src/agent" folder](./src/agent) - agent code
-- ["src/device" folder](./src/device) - device code
-- ["src/shared" folder](./src/shared) - shared code (for both agent and device)
+### Manual Assembly ###
 
-To build the project use [Builder](https://github.com/electricimp/Builder). Just call it for the [Main.agent.nut](./src/agent/Main.agent.nut) and [Main.device.nut](./src/device/Main.device.nut) files.
-For example: run these commands from the "src/" directory `pleasebuild agent/Main.agent.nut > agent.nut` and `pleasebuild device/Main.device.nut > device.nut` and you will get two new files: `agent.nut` and `device.nut`. Then you can copy the content of these files to the [Electric Imp's IDE](https://impcentral.electricimp.com/ide/) and run the application.
+The application’s source code has the following structure:
 
-#### Build And Run Using Sublime Plug-In ####
+- [`src/agent`](./src/agent) &mdash; the agent code.
+- [`src/device`](./src/device) &mdash; the device code.
+- [`src/shared`](./src/shared) &mdash; code included in both the agent and device code.
 
-You can use this option instead of manual building and running the application. \
-This project has been written using [Sublime Plug-in](https://github.com/electricimp/ElectricImp-Sublime). All configuration settings and pre-processed files have been excluded.
-1. Follow the instructions [here](https://github.com/electricimp/ElectricImp-Sublime#installation) to install the plug-in and create a project
-2. Replace the `src` folder in your newly created project with the `src` folder found in this repository
-3. Update `settings/electric-imp.settings` "device-file" and "agent-file" to the following (on Windows use `\\` instead of `/`):
+To build the project, use [Builder](https://github.com/electricimp/Builder). Just call it for the [Main.agent.nut](./src/agent/Main.agent.nut) and [Main.device.nut](./src/device/Main.device.nut) files. To do so, run these commands from the `src` directory:
+
+```bash
+pleasebuild agent/Main.agent.nut > agent.nut
+pleasebuild device/Main.device.nut > device.nut
+```
+
+You will get two new files &mdash; `agent.nut` and `device.nut` &mdash; which you can then copy into the impCentral™ code editor on either [the AWS impCloud](https://impcentral.electricimp.com/login) or [the Azure impCloud](https://impcentral-azure.electricimp.com/login), depending on which of these impClouds hosts your account and imp hardware. Now run the application.
+
+### Build And Run Using Sublime ###
+
+This application has been written using [Electric Imp’s Sublime Plug-in](https://github.com/electricimp/ElectricImp-Sublime). All configuration settings and pre-processed files have been excluded. If you wish to use this option, follow these steps:
+
+1. Follow [these instructions](https://github.com/electricimp/ElectricImp-Sublime#installation) to install the plug-in and create a project.
+2. Replace the `src` folder in your newly created project with the `src` folder found in this repository.
+3. Update the `settings/electric-imp.settings` file’s *device-file* and *agent-file* keys to the following (on Windows use `\\` instead of `/`):
 ```
     "device-file": "src/device/Main.device.nut",
     "agent-file": "src/agent/Main.agent.nut"
 ```
 4. [Build and run the application](https://github.com/electricimp/ElectricImp-Sublime#building-and-running)
 
-#### Start Flashing ####
+## Start Flashing ##
 
-If the application is running, you should make an HTTP GET-request to the `/flash` endpoint of agent to start flashing. \
-You can just click on the agent's URL in the [Electric Imp's IDE](https://impcentral.electricimp.com/ide/), append `/flash` to the URL and press Enter.
+When the application is running, you should make an HTTP GET request to the agent’s `/flash` endpoint to start flashing. Just click on the agent’s URL in the impCentral code editor, then append `/flash` to the URL in the browser link field, and press *Enter*:
 
-This message in the logs states successful flashing: `Flashing finished with status: OK`. \
-Be prepared that the flashing process may take a while. During the process you should see messages like `Chunk requested`/`Chunk received`. \
-Speed of flashing is about 450B/s (has been measured during the testing with STM32VLDISCOVERY).
+![Browser link field](./imgs/browser.png)
 
-## Limitations ##
+This message in the logs states successful flashing: `Flashing finished with status: OK`.
 
-The example:
-- Has been tested only manually with STM32VLDISCOVERY (STM32F100RBT6B)
-- Supports firmware downloading only via HTTPs (and authentication is only Basic)
-- Supports only Binary images of firmware
+The flashing process may take some time. The speed of flashing is approximately 450 bytes per second (measured during the testing with the STM32VLDISCOVERY). During the process, you should see messages like `Chunk requested/Chunk received` appear in the log. 
 
-# License #
+## License ##
 
 Code licensed under the [MIT License](./LICENSE).
