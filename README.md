@@ -13,9 +13,9 @@ To make use of SWDFlasher-STM32 you will require:
 
 ### Wiring ###
 
-You will need three wires to bridge the following pins on the imp and the STM32VLDISCOVERY/STM32VLDISCOVERY:
+You will need three wires to bridge the following pins on the imp and the STM32VLDISCOVERY/STM32F100RBT6B:
 
-| imp | STM32F100RBT6B |
+| imp | STM32VLDISCOVERY |
 | :-: | :-: |
 | GND |GND |
 | C | SWCLK |
@@ -50,7 +50,7 @@ To use one of the sample images you need to obtain a direct link to the files on
 
 #### How To Make A Binary Firmware Image ####
 
-STM32F10xxx firmware images can be provided to you in any of a number of different formats. However, this application **only supports the binary format**. If you have an image in a different format, you will first need to convert it to binary. This can be done using the [*bjcopy* (or *arm-none-eabi-objcopy*)](https://linux.die.net/man/1/objcopy) utility from the [GNU ARM Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm).
+STM32F10xxx firmware images can be provided to you in any of a number of different formats. However, this application **only supports the binary format**. If you have an image in a different format, you will first need to convert it to binary. This can be done using the [*objcopy* (or *arm-none-eabi-objcopy*)](https://linux.die.net/man/1/objcopy) utility from the [GNU ARM Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm).
 
 For example, the following command:
 
@@ -117,7 +117,7 @@ When the application is running, you should make an HTTP GET request to the agen
 
 This message in the logs states successful flashing: `Flashing finished with status: OK`.
 
-The flashing process may take some time. The speed of flashing is approximately 450 bytes per second (measured during the testing with the STM32VLDISCOVERY). During the process, you should see messages like `Chunk requested/Chunk received` appear in the log. 
+The flashing process may take some time. The speed of flashing is approximately 450 bytes per second (measured during the testing with the imp003 and STM32VLDISCOVERY). During the process, you should see messages like `Chunk requested/Chunk received` appear in the log. 
 
 ## License ##
 

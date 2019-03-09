@@ -31,7 +31,7 @@ class FirmwareHTTPDownloader {
     _chunkSize = null;
     _fw = null;
 
-    constructor(url, headers = {}, chunkSize = 4096) {
+    constructor(url, headers = {}, chunkSize = 1024) {
         const FW_HTTP_D_MAX_REDIRECTIONS = 3;
 
         _url = url;
