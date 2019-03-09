@@ -203,7 +203,7 @@ const IMAGE_URL = "<link to your firmware image>";
 const CREDENTIALS = "";
 local headers = {};
 if (CREDENTIALS.len() > 0) {
-    headers["Authorization"] = "Basic " + http.base64encode(CREDENTIALS);
+    headers["Authorization"] <- "Basic " + http.base64encode(CREDENTIALS);
 }
 
 fwDownloader <- FirmwareHTTPDownloader(IMAGE_URL, headers);
